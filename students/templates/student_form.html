@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Add Student{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <h2 class="fw-bold mb-4">Add Student</h2>
+
+  <!-- Form Card -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <form method="post" enctype="multipart/form-data" class="row g-3">
+        {% csrf_token %}
+
+        <!-- First Name -->
+        <div class="col-md-6">
+          <label class="form-label">First Name</label>
+          <input name="first_name" class="form-control" required>
+        </div>
+
+        <!-- Last Name -->
+        <div class="col-md-6">
+          <label class="form-label">Last Name</label>
+          <input name="last_name" class="form-control">
+        </div>
+
+        <!-- Email -->
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input name="email" type="email" class="form-control">
+        </div>
+
+        <!-- Phone -->
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input name="phone" type="text" class="form-control" required>
+        </div>
+
+        <!-- Department (from Django form) -->
+        <div class="col-md-6">
+          <label class="form-label">Department</label>
+          <select name="department" class="form-select" required>
+            <option value="">-- Select Department --</option>
+            {% for value, label in form.department.field.choices %}
+              {% if value %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Roll No -->
+        <div class="col-md-6">
+          <label class="form-label">Roll No</label>
+          <input name="roll_no" type="text" class="form-control" required>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="col-md-6">
+          <label class="form-label">Student Image</label>
+          <input name="image" type="file" class="form-control">
+          <div class="form-text">Upload a JPG/PNG photo (optional)</div>
+        </div>
+
+        <!-- Submit -->
+        <div class="col-12 mt-3">
+          <button type="submit" class="btn btn-primary w-100">Create Student</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

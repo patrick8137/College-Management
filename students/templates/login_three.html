@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+  <h2 class="mb-3">Login — Choose Role</h2>
+
+  {% if message %}
+    <div class="alert alert-danger">{{ message }}</div>
+  {% endif %}
+
+  <div class="row g-4">
+
+    <!-- Admin Login -->
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title mb-3">Principal Login</h4>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="admin">
+
+            <div class="mb-3">
+              <label class="form-label">Username</label>
+              <input name="username" class="form-control" placeholder="Enter username">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input name="password" type="password" class="form-control" placeholder="Enter password">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Login as Admin</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teacher Login -->
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title mb-3">Teacher Login</h4>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="teacher">
+
+            <div class="mb-3">
+              <label class="form-label">Username</label>
+              <input name="username" class="form-control" placeholder="Enter username">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input name="password" type="password" class="form-control" placeholder="Enter password">
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">Login as Teacher</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student Login -->
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title mb-3">Student Login</h4>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="student">
+
+            <div class="mb-3">
+              <label class="form-label">Username</label>
+              <input name="username" class="form-control" placeholder="Enter username / Admission No">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input name="password" type="password" class="form-control" placeholder="Enter password">
+            </div>
+
+            <button type="submit" class="btn btn-info w-100 text-white">Login as Student</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- row -->
+
+</div>
+
+{% endblock %}

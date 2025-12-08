@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Timetable - {{ department.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <h2 class="fw-bold mb-3">Timetable – {{ department.name }}</h2>
+
+  <div class="mb-3 d-flex gap-2">
+    <a href="{% url 'add_timetable' department.id %}" class="btn btn-primary btn-sm">+ Add Entry</a>
+    <a href="{% url 'teacher_dashboard' %}" class="btn btn-secondary btn-sm">Back</a>
+  </div>
+
+  {% if timetable %}
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <table class="table table-striped table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Day</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Start</th>
+            <th>End</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in timetable %}
+          <tr>
+            <td>{{ t.day }}</td>
+            <td>{{ t.subject }}</td>
+            <td>{% if t.teacher %}{{ t.teacher.user.get_full_name }}{% else %}-{% endif %}</td>
+            <td>{{ t.start_time }}</td>
+            <td>{{ t.end_time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+    <p class="text-muted">No timetable entries found.</p>
+  {% endif %}
+
+</div>
+{% endblock %}

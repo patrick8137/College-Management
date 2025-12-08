@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <h1 class="h4 mb-1">Student Dashboard</h1>
+      <div class="text-muted">Welcome back, {{ student.user.get_full_name }}</div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <a href="{% url 'download_admit' %}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-file-earmark-arrow-down"></i> Admit Card
+      </a>
+      
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Left column: profile + next class -->
+    <div class="col-12 col-lg-4">
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body d-flex gap-3 align-items-center">
+          <div>
+            {% if student.image %}
+              <img src="{{ student.image.url }}" alt="photo" class="img-fluid rounded" style="width:110px; height:110px; object-fit:cover;">
+            {% else %}
+              <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width:110px; height:110px;">
+                No Image
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="flex-grow-1">
+            <h5 class="mb-1">{{ student.user.get_full_name }}</h5>
+            <div class="small text-muted">Username: {{ student.user.username }}</div>
+            <div class="small text-muted">Department: {{ student.department }}</div>
+
+            <div class="mt-2 d-flex gap-2">
+              <a href="{% url 'student_dashboard' %}" class="btn btn-sm btn-outline-primary">Profile</a>
+              <a href="{% url 'student_dashboard' %}#attendance" class="btn btn-sm btn-outline-secondary">Attendance</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next class -->
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-2">Next Class</h6>
+          {% if next_class %}
+            <div class="small text-muted mb-1">{{ next_class.day }} — {{ next_class.start_time }} to {{ next_class.end_time }}</div>
+            <div class="fw-medium">{{ next_class.subject }}</div>
+            <div class="small text-muted">
+              {% if next_class.teacher %}{{ next_class.teacher.user.get_full_name }}{% else %}-{% endif %}
+            </div>
+            <a href="{% url 'view_timetable' student.department.id %}" class="btn btn-sm btn-primary mt-3">View Timetable</a>
+          {% else %}
+            <div class="text-muted">No upcoming classes found for today.</div>
+            <a href="{% url 'view_timetable' student.department.id %}" class="btn btn-sm btn-outline-primary mt-3">View Full Timetable</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Compact timetable (weekly summary) -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-2">Weekly Summary</h6>
+
+          {% if timetable %}
+            <div class="small text-muted mb-2">Next few entries</div>
+            <ul class="list-group list-group-flush">
+              {% for t in timetable|slice:":6" %}
+                <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                  <div>
+                    <div class="fw-medium">{{ t.subject }}</div>
+                    <div class="small text-muted">{{ t.day }} • {{ t.start_time }} - {{ t.end_time }}</div>
+                  </div>
+                  <div class="small text-muted text-end">
+                    {% if t.teacher %}{{ t.teacher.user.get_full_name }}{% else %}-{% endif %}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+            <div class="mt-2 text-center">
+              <a href="{% url 'view_timetable' student.department.id %}" class="link-primary small">See all</a>
+            </div>
+          {% else %}
+            <div class="text-muted">No timetable entries available.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: timetable table + attendance -->
+    <div class="col-12 col-lg-8">
+
+      <!-- Timetable full (grouped by day) -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Timetable</strong>
+            <div class="small text-muted">Department: {{ student.department }}</div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          {% if timetable %}
+            <div class="table-responsive">
+              <table class="table table-sm mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Day</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Subject</th>
+                    <th>Teacher</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for t in timetable %}
+                    <tr>
+                      <td>{{ t.day }}</td>
+                      <td>{{ t.start_time }}</td>
+                      <td>{{ t.end_time }}</td>
+                      <td>{{ t.subject }}</td>
+                      <td>{% if t.teacher %}{{ t.teacher.user.get_full_name }}{% else %}-{% endif %}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="p-3 text-muted">No timetable entries available for your department.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Attendance history -->
+      <div class="card shadow-sm" id="attendance">
+        <div class="card-header bg-light">
+          <strong>Attendance History</strong>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Marked By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for a in attendances %}
+                  <tr>
+                    <td>{{ a.date }}</td>
+                    <td>
+                      {% if a.present %}
+                        <span class="badge bg-success">Present</span>
+                      {% else %}
+                        <span class="badge bg-danger">Absent</span>
+                      {% endif %}
+                    </td>
+                    <td>{% if a.marked_by %}{{ a.marked_by.user.get_full_name }}{% else %}-{% endif %}</td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-3">No attendance records yet.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- pager placeholder (if you add pagination in view) -->
+          {% if attendances.has_other_pages %}
+            <div class="card-footer text-center">
+              <nav>
+                <ul class="pagination justify-content-center mb-0">
+                  {% if attendances.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ attendances.previous_page_number }}">Previous</a></li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                  {% endif %}
+                  <li class="page-item disabled"><span class="page-link">Page {{ attendances.number }} of {{ attendances.paginator.num_pages }}</span></li>
+                  {% if attendances.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ attendances.next_page_number }}">Next</a></li>
+                  {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                  {% endif %}
+                </ul>
+              </nav>
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

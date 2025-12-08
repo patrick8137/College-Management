@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Add Timetable{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <h3 class="mb-3">Add Timetable – {{ department.name }}</h3>
+
+  <div class="card">
+    <div class="card-body">
+
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <!-- OPTIONAL: Date picker (calendar) -->
+        <div class="col-md-4">
+          <label for="id_date" class="form-label">Date (optional)</label>
+          <input id="id_date" name="date" type="date" class="form-control">
+          <div class="form-text">Pick a specific date for this timetable entry (optional).</div>
+        </div>
+
+        <!-- Day (kept from form) -->
+        <div class="col-md-4">
+          <label class="form-label">Day</label>
+          {{ form.day }}
+        </div>
+
+        <!-- Subject -->
+        <div class="col-md-4">
+          <label class="form-label">Subject</label>
+          {{ form.subject }}
+        </div>
+
+        <!-- Teacher -->
+        <div class="col-md-4">
+          <label class="form-label">Teacher</label>
+          {{ form.teacher }}
+        </div>
+
+        <!-- Start Time (native time picker / clock UI) -->
+        <div class="col-md-4">
+          <label for="id_start_time" class="form-label">Start Time</label>
+          <!-- name matches your form field so POST will bind -->
+          <input id="id_start_time" name="start_time" type="time" step="60" class="form-control" required>
+        </div>
+
+        <!-- End Time (native time picker / clock UI) -->
+        <div class="col-md-4">
+          <label for="id_end_time" class="form-label">End Time</label>
+          <input id="id_end_time" name="end_time" type="time" step="60" class="form-control" required>
+        </div>
+
+        <!-- Hidden department field - keep it so view knows which department -->
+        {{ form.department.as_hidden }}
+
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary w-100">Save</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Optional: small client-side validation to ensure end > start if both provided -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('form');
+  const start = document.getElementById('id_start_time');
+  const end = document.getElementById('id_end_time');
+
+  form.addEventListener('submit', function (e) {
+    if (start && end && start.value && end.value) {
+      if (end.value <= start.value) {
+        e.preventDefault();
+        alert('End time must be later than start time.');
+        end.focus();
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

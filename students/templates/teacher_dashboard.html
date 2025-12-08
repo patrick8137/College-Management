@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Teacher Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Teacher Dashboard</h2>
+      <p class="text-muted mb-0">Welcome, {{ teacher.user.get_full_name }}</p>
+    </div>
+  </div>
+
+  <!-- Departments Section -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-light fw-semibold">
+      Departments Assigned
+    </div>
+
+    <div class="card-body">
+
+      {% if departments %}
+        <ul class="list-group">
+          {% for d in departments %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ d.name }}</strong>
+              </div>
+
+              <div class="btn-group btn-group-sm">
+                <a href="{% url 'mark_attendance' d.id %}" class="btn btn-outline-primary">
+                  Mark Attendance
+                </a>
+                <a href="{% url 'view_timetable' d.id %}" class="btn btn-outline-secondary">
+                  Timetable
+                </a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No departments assigned.</p>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+

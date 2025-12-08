@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Add Teacher{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <h2 class="fw-bold mb-4">Add Teacher</h2>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <!-- First Name -->
+        <div class="col-md-6">
+          <label class="form-label">First Name</label>
+          <input name="first_name" class="form-control" required>
+        </div>
+
+        <!-- Last Name -->
+        <div class="col-md-6">
+          <label class="form-label">Last Name</label>
+          <input name="last_name" class="form-control">
+        </div>
+
+        <!-- Email -->
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input name="email" type="email" class="form-control">
+        </div>
+
+        <!-- Phone -->
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input name="phone" type="text" class="form-control" required>
+        </div>
+
+        <!-- Department (Django form field) -->
+        <div class="col-md-6">
+          <label class="form-label">Department</label>
+          <select name="department" class="form-select" required>
+            <option value="">-- Select Department --</option>
+            {% for value, label in form.department.field.choices %}
+              {% if value %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Submit -->
+        <div class="col-12 mt-3">
+          <button type="submit" class="btn btn-primary w-100">Create Teacher</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
