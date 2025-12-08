@@ -7,5 +7,5 @@ class StudentsConfig(AppConfig):
     name = "students"
 
     def ready(self):
-        # ✅ Prevent Django from writing last_login to DB (Vercel SQLite fix)
+        # 🚫 Disable ALL last_login DB writes (CRITICAL for Vercel)
         user_logged_in.disconnect(update_last_login)
