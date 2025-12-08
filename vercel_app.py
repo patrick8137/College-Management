@@ -1,9 +1,9 @@
 import os
-from django.core.wsgi import get_wsgi_application
+from django.core.asgi import get_asgi_application
 
 os.environ.setdefault(
-    'DJANGO_SETTINGS_MODULE',
-    'college_mgmt.settings'
+    "DJANGO_SETTINGS_MODULE",
+    "college_mgmt.settings"
 )
 
-app = get_wsgi_application()
+application = get_asgi_application()
