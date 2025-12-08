@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-f8fg+xgc+gn-5_40d#^5q6ia9a*7=&=@^%9!%n=q_gw6337m%6'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app']
+ALLOWED_HOSTS = []
 
 # URL where requests are redirected for login. Default Django value is '/accounts/login/'.
 # Our app uses a single-page login view at the project root, so point LOGIN_URL there.
@@ -41,9 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'students.apps.StudentsConfig',
-
-
+    'students',
 ]
 
 MIDDLEWARE = [
@@ -55,14 +53,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+
 ROOT_URLCONF = 'college_mgmt.urls'
-
-# Prevent Django auth from touching DB unnecessarily
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-]
-
 
 TEMPLATES = [
     {
@@ -80,7 +72,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'college_mgmt.wsgi.application'
-ASGI_APPLICATION = "college_mgmt.asgi.application"
 
 
 # Database
