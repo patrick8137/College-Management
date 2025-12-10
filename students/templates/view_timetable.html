@@ -22,6 +22,7 @@
             <th>Teacher</th>
             <th>Start</th>
             <th>End</th>
+            <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -32,6 +33,22 @@
             <td>{% if t.teacher %}{{ t.teacher.user.get_full_name }}{% else %}-{% endif %}</td>
             <td>{{ t.start_time }}</td>
             <td>{{ t.end_time }}</td>
+            <td class="text-end">
+              {# show actions only to staff or teachers #}
+              {% if user.is_staff or user.teacher %}
+                <a href="{% url 'edit_timetable' department.id t.id %}" class="btn btn-sm btn-outline-primary me-1">
+                  Edit
+                </a>
+
+                <form action="{% url 'delete_timetable' department.id t.id %}"
+                      method="post"
+                      style="display:inline-block;"
+                      onsubmit="return confirm('Are you sure you want to delete this timetable entry?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>

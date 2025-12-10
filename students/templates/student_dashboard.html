@@ -10,18 +10,11 @@
       <h1 class="h4 mb-1">Student Dashboard</h1>
       <div class="text-muted">Welcome back, {{ student.user.get_full_name }}</div>
     </div>
-
-    <div class="d-flex gap-2">
-      <a href="{% url 'download_admit' %}" class="btn btn-outline-primary btn-sm">
-        <i class="bi bi-file-earmark-arrow-down"></i> Admit Card
-      </a>
-      
-    </div>
   </div>
 
   <div class="row g-4">
 
-    <!-- Left column: profile + next class -->
+    <!-- Left column: profile + next class / weekly summary -->
     <div class="col-12 col-lg-4">
       <div class="card mb-3 shadow-sm">
         <div class="card-body d-flex gap-3 align-items-center">
@@ -39,30 +32,12 @@
             <h5 class="mb-1">{{ student.user.get_full_name }}</h5>
             <div class="small text-muted">Username: {{ student.user.username }}</div>
             <div class="small text-muted">Department: {{ student.department }}</div>
-
-            <div class="mt-2 d-flex gap-2">
-              <a href="{% url 'student_dashboard' %}" class="btn btn-sm btn-outline-primary">Profile</a>
-              <a href="{% url 'student_dashboard' %}#attendance" class="btn btn-sm btn-outline-secondary">Attendance</a>
+            <div class="d-flex gap-2 mt-2">
+              <a href="{% url 'download_admit' %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-file-earmark-arrow-down"></i> Admit Card
+              </a>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Next class -->
-      <div class="card mb-3 shadow-sm">
-        <div class="card-body">
-          <h6 class="card-title mb-2">Next Class</h6>
-          {% if next_class %}
-            <div class="small text-muted mb-1">{{ next_class.day }} — {{ next_class.start_time }} to {{ next_class.end_time }}</div>
-            <div class="fw-medium">{{ next_class.subject }}</div>
-            <div class="small text-muted">
-              {% if next_class.teacher %}{{ next_class.teacher.user.get_full_name }}{% else %}-{% endif %}
-            </div>
-            <a href="{% url 'view_timetable' student.department.id %}" class="btn btn-sm btn-primary mt-3">View Timetable</a>
-          {% else %}
-            <div class="text-muted">No upcoming classes found for today.</div>
-            <a href="{% url 'view_timetable' student.department.id %}" class="btn btn-sm btn-outline-primary mt-3">View Full Timetable</a>
-          {% endif %}
         </div>
       </div>
 
@@ -86,9 +61,6 @@
                 </li>
               {% endfor %}
             </ul>
-            <div class="mt-2 text-center">
-              <a href="{% url 'view_timetable' student.department.id %}" class="link-primary small">See all</a>
-            </div>
           {% else %}
             <div class="text-muted">No timetable entries available.</div>
           {% endif %}
@@ -96,8 +68,38 @@
       </div>
     </div>
 
-    <!-- Right column: timetable table + attendance -->
+    <!-- Right column: attendance summary + timetable + attendance history -->
     <div class="col-12 col-lg-8">
+
+      <!-- NEW: Attendance summary card -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body text-center">
+          <h5 class="card-title mb-3">Attendance Summary</h5>
+          {% if total_classes > 0 %}
+            <div class="row">
+              <div class="col-4">
+                <div class="small text-muted">Total Classes</div>
+                <div class="fs-5 fw-semibold">{{ total_classes }}</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-success">Present</div>
+                <div class="fs-5 fw-semibold text-success">{{ present_count }}</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-danger">Absent</div>
+                <div class="fs-5 fw-semibold text-danger">{{ absent_count }}</div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <span class="badge bg-primary px-3 py-2">
+                Attendance: {{ attendance_percentage }}%
+              </span>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">No attendance data available yet.</p>
+          {% endif %}
+        </div>
+      </div>
 
       <!-- Timetable full (grouped by day) -->
       <div class="card mb-4 shadow-sm">

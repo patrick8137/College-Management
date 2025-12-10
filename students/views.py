@@ -8,7 +8,8 @@ from .forms import StudentCreateForm, TeacherCreateForm, TimeTableForm, Departme
 from datetime import date
 from io import BytesIO
 from reportlab.pdfgen import canvas
-
+from django.utils import timezone
+from django.contrib import messages
 # Role helpers
 def is_admin(user):
     return user.is_superuser or user.is_staff
@@ -26,47 +27,33 @@ def login_three(request):
         role = request.POST.get('role')
         username = request.POST.get('username')
         password = request.POST.get('password')
+
         user = authenticate(request, username=username, password=password)
+
         if user is not None:
             if role == 'admin' and is_admin(user):
                 login(request, user)
-                return redirect('admin_dashboard')
+                return redirect('/admin/')  
+
             if role == 'teacher' and is_teacher(user):
                 login(request, user)
                 return redirect('teacher_dashboard')
+
             if role == 'student' and is_student(user):
                 login(request, user)
                 return redirect('student_dashboard')
+
             msg = 'Invalid credentials for selected role.'
         else:
             msg = 'Invalid username or password.'
+
     return render(request, 'login_three.html', {'message': msg})
+
 
 def user_logout(request):
     logout(request)
     return redirect('login_three')
 
-# Admin dashboard
-@login_required
-@user_passes_test(is_admin)
-def admin_dashboard(request):
-    teachers = Teacher.objects.select_related('user').all()
-    students = Student.objects.select_related('user').all()
-    departments = Department.objects.all()
-    today = date.today()
-    attendance_today = {}
-    for dept in departments:
-        dept_students = Student.objects.filter(department=dept)
-        total = dept_students.count()
-        present = Attendance.objects.filter(student__in=dept_students, date=today, present=True).count()
-        attendance_today[dept.name] = {'total': total, 'present': present}
-    return render(request, 'admin_dashboard.html', {
-        'teachers': teachers,
-        'students': students,
-        'attendance_today': attendance_today,
-        'departments': departments,
-        'today': today
-    })
 
 # Add student (with image upload)
 @login_required
@@ -80,12 +67,12 @@ def add_student(request):
             phone = form.cleaned_data['phone']
             email = form.cleaned_data.get('email', '')
             username = (first + ((' ' + last) if last else '')).strip().replace(' ', '').lower()
-            password = phone  # insecure; for demo only
+            password = phone 
             user = User.objects.create_user(username=username, password=password, first_name=first, last_name=last, email=email)
             student = form.save(commit=False)
             student.user = user
             student.save()
-            return redirect('admin_dashboard')
+            return redirect('/admin/')
     else:
         form = StudentCreateForm()
     return render(request, 'student_form.html', {'form': form})
@@ -106,7 +93,7 @@ def add_teacher(request):
             user = User.objects.create_user(username=username, password=password, first_name=first, last_name=last, email=email)
             teacher = Teacher(user=user, department=form.cleaned_data.get('department'))
             teacher.save()
-            return redirect('admin_dashboard')
+            return redirect('/admin/')
     else:
         form = TeacherCreateForm()
     return render(request, 'teacher_form.html', {'form': form})
@@ -122,44 +109,62 @@ def teacher_dashboard(request):
 # Mark attendance (AJAX-friendly)
 @login_required
 @user_passes_test(is_teacher)
-def mark_attendance(request, dept_id=None):
+def mark_attendance(request, dept_id):
     teacher = request.user.teacher
-    dept = get_object_or_404(Department, id=dept_id) if dept_id else None
-    students = Student.objects.filter(department=dept) if dept else Student.objects.none()
+    department = get_object_or_404(Department, id=dept_id)
+    students = Student.objects.filter(department=department)
+
     if request.method == 'POST':
         date_str = request.POST.get('date')
         if not date_str:
-            return JsonResponse({'status':'error','message':'date required'}, status=400)
-        dt = date.fromisoformat(date_str)
-        for s in students:
-            present = request.POST.get(f'present_{s.id}') == 'on'
-            att, created = Attendance.objects.get_or_create(student=s, date=dt, defaults={'present': present, 'marked_by': teacher})
+            return JsonResponse(
+                {'status': 'error', 'message': 'Date is required'},
+                status=400
+            )
+        attendance_date = date.fromisoformat(date_str)
+        for student in students:
+            present = request.POST.get(f'present_{student.id}') == 'on'
+            attendance, created = Attendance.objects.get_or_create(
+                student=student,
+                date=attendance_date,
+                defaults={
+                    'present': present,
+                    'marked_by': teacher
+                }
+            )
             if not created:
-                att.present = present
-                att.marked_by = teacher
-                att.save()
-        return JsonResponse({'status':'ok'})
-    return render(request, 'mark_attendance.html', {'students': students, 'department': dept, 'today': date.today().isoformat()})
-
+                attendance.present = present
+                attendance.marked_by = teacher
+                attendance.save()
+        return JsonResponse({'status': 'ok'})
+    return render(request, 'mark_attendance.html', {
+        'students': students,
+        'department': department,
+        'today': date.today().isoformat()
+    })
 # Student dashboard
-from django.utils import timezone
-# other imports...
-
 @login_required
 @user_passes_test(is_student)
 def student_dashboard(request):
     student = request.user.student
     attends = Attendance.objects.filter(student=student).order_by('-date')
-
-    # Timetable for student's department (order by day then start_time)
-    timetable = TimeTable.objects.filter(department=student.department).order_by('day', 'start_time')
-
-    # Optional: compute next upcoming class (simple approach)
+    total_classes = attends.count()
+    present_count = attends.filter(present=True).count()
+    absent_count = attends.filter(present=False).count()
+    attendance_percentage = 0
+    if total_classes > 0:
+        attendance_percentage = round((present_count / total_classes) * 100, 2)
+    timetable = TimeTable.objects.filter(
+        department=student.department
+    ).order_by('day', 'start_time')
     next_class = None
     now = timezone.localtime()
-    today_name = now.strftime('%A')  # e.g., 'Monday'
-    # find today's classes after current time
-    todays = timetable.filter(day=today_name, start_time__gte=now.time()).order_by('start_time')
+    today_name = now.strftime('%A')  
+    todays = timetable.filter(
+        day=today_name,
+        start_time__gte=now.time()
+    ).order_by('start_time')
+
     if todays.exists():
         next_class = todays.first()
 
@@ -168,9 +173,11 @@ def student_dashboard(request):
         'attendances': attends,
         'timetable': timetable,
         'next_class': next_class,
+        'total_classes': total_classes,
+        'present_count': present_count,
+        'absent_count': absent_count,
+        'attendance_percentage': attendance_percentage,
     })
-
-
 # Admit card with student image
 @login_required
 @user_passes_test(is_student)
@@ -188,11 +195,9 @@ def download_admit_card(request):
     p.drawString(40, 710, f"Department: {student.department.name if student.department else '-'}")
     p.drawString(40, 690, f"Roll No: {student.roll_no or '-'}")
 
-    # Draw image if exists
     if student.image:
         try:
             image_path = student.image.path
-            # position x=400, y=650 — adjust as needed
             p.drawImage(image_path, 400, 660, width=120, height=120, preserveAspectRatio=True, mask='auto')
         except Exception as e:
             p.drawString(400, 700, "Image not available")
@@ -221,7 +226,7 @@ def add_timetable(request, dept_id):
         form = TimeTableForm(request.POST)
         if form.is_valid():
             tt = form.save(commit=False)
-            tt.department = department   # override department from URL
+            tt.department = department
             tt.save()
             return redirect('view_timetable', dept_id=department.id)
     else:
@@ -232,3 +237,58 @@ def add_timetable(request, dept_id):
         'department': department
     })
 
+@login_required
+@user_passes_test(lambda u: is_teacher(u) or is_admin(u))
+def edit_timetable(request, dept_id, tt_id):
+    department = get_object_or_404(Department, id=dept_id)
+    tt = get_object_or_404(TimeTable, id=tt_id, department=department)
+
+    if request.method == 'POST':
+        form = TimeTableForm(request.POST, instance=tt)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.department = department  
+            if hasattr(request.user, 'teacher'):
+                try:
+                    obj.teacher = request.user.teacher
+                except Exception:
+                    pass
+
+            overlap_qs = TimeTable.objects.filter(
+                department=department,
+                day=obj.day,
+                start_time__lt=obj.end_time,
+                end_time__gt=obj.start_time
+            ).exclude(id=tt.id)
+
+            if overlap_qs.exists():
+                conflict = overlap_qs.first()
+                messages.error(
+                    request,
+                    f"Time conflict with existing class: "
+                    f"{getattr(conflict, 'subject', 'Unknown')} "
+                    f"({conflict.start_time} - {conflict.end_time})."
+                )
+            else:
+                obj.save()
+                messages.success(request, "Timetable entry updated successfully.")
+                return redirect('view_timetable', dept_id=department.id)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = TimeTableForm(instance=tt)
+    return render(request, 'add_timetable.html', {
+        'form': form,
+        'department': department,
+        'is_edit': True,
+        'timetable_entry': tt,
+    })
+@login_required
+@user_passes_test(lambda u: is_teacher(u) or is_admin(u))
+def delete_timetable(request, dept_id, tt_id):
+    department = get_object_or_404(Department, id=dept_id)
+    tt = get_object_or_404(TimeTable, id=tt_id, department=department)
+    if request.method == 'POST':
+        tt.delete()
+        messages.success(request, "Timetable entry deleted successfully.")
+        return redirect('view_timetable', dept_id=department.id)
